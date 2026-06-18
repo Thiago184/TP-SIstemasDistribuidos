@@ -1,0 +1,92 @@
+services:
+  peer1:
+    build: ./cluster_node
+    container_name: peer1
+    environment:
+      - PEER_ID=peer1
+      - PEERS=http://peer1:5000,http://peer2:5000,http://peer3:5000,http://peer4:5000,http://peer5:5000
+    volumes:
+      - ./recurso_R.txt:/app/recurso_R.txt
+    ports:
+      - "5001:5000"
+
+  peer2:
+    build: ./cluster_node
+    container_name: peer2
+    environment:
+      - PEER_ID=peer2
+      - PEERS=http://peer1:5000,http://peer2:5000,http://peer3:5000,http://peer4:5000,http://peer5:5000
+    volumes:
+      - ./recurso_R.txt:/app/recurso_R.txt
+
+  peer3:
+    build: ./cluster_node
+    container_name: peer3
+    environment:
+      - PEER_ID=peer3
+      - PEERS=http://peer1:5000,http://peer2:5000,http://peer3:5000,http://peer4:5000,http://peer5:5000
+    volumes:
+      - ./recurso_R.txt:/app/recurso_R.txt
+
+  peer4:
+    build: ./cluster_node
+    container_name: peer4
+    environment:
+      - PEER_ID=peer4
+      - PEERS=http://peer1:5000,http://peer2:5000,http://peer3:5000,http://peer4:5000,http://peer5:5000
+    volumes:
+      - ./recurso_R.txt:/app/recurso_R.txt
+
+  peer5:
+    build: ./cluster_node
+    container_name: peer5
+    environment:
+      - PEER_ID=peer5
+      - PEERS=http://peer1:5000,http://peer2:5000,http://peer3:5000,http://peer4:5000,http://peer5:5000
+    volumes:
+      - ./recurso_R.txt:/app/recurso_R.txt
+
+  client1:
+    build: ./client
+    container_name: client1
+    environment:
+      - CLIENT_ID=client1
+      - TARGET_PEER=http://peer1:5000
+    depends_on:
+      - peer1
+
+  client2:
+    build: ./client
+    container_name: client2
+    environment:
+      - CLIENT_ID=client2
+      - TARGET_PEER=http://peer2:5000
+    depends_on:
+      - peer2
+
+  client3:
+    build: ./client
+    container_name: client3
+    environment:
+      - CLIENT_ID=client3
+      - TARGET_PEER=http://peer3:5000
+    depends_on:
+      - peer3
+
+  client4:
+    build: ./client
+    container_name: client4
+    environment:
+      - CLIENT_ID=client4
+      - TARGET_PEER=http://peer4:5000
+    depends_on:
+      - peer4
+
+  client5:
+    build: ./client
+    container_name: client5
+    environment:
+      - CLIENT_ID=client5
+      - TARGET_PEER=http://peer5:5000
+    depends_on:
+      - peer5
