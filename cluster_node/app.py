@@ -37,12 +37,14 @@ def request_resource():
     data = request.json
     client_id = data["client_id"]
     request_id = data["request_id"]
+    client_timestamp = data.get("client_timestamp")
 
     ts = timestamp()
 
     my_request = {
         "client_id": client_id,
         "request_id": request_id,
+        "client_timestamp": client_timestamp,
         "timestamp": ts,
         "peer_id": PEER_ID
     }
@@ -51,7 +53,10 @@ def request_resource():
         current_request = my_request
         ok_received = {PEER_ID}
 
-    print(f"[{PEER_ID}] Pedido recebido de {client_id} | timestamp={ts}")
+    print(
+        f"[{PEER_ID}] Pedido recebido de {client_id} | "
+        f"client_timestamp={client_timestamp} | peer_timestamp={ts}"
+    )
 
     for peer in PEERS:
         if peer != f"http://{PEER_ID}:5000":
@@ -73,13 +78,15 @@ def request_resource():
         in_critical_section = False
         current_request = None
 
-    release_deferred_requests()
+    release_deferred_requests(my_request)
 
     return jsonify({
         "status": "COMMITTED",
         "peer": PEER_ID,
         "client_id": client_id,
-        "request_id": request_id
+        "request_id": request_id,
+        "client_timestamp": client_timestamp,
+        "peer_timestamp": ts
     })
 
 
@@ -140,7 +147,9 @@ def enter_critical_section(req):
     with open("recurso_R.txt", "a") as file:
         file.write(
             f"ENTER_CS | peer={PEER_ID} | client={req['client_id']} | "
-            f"request={req['request_id']} | timestamp={time.time()}\n"
+            f"request={req['request_id']} | "
+            f"client_timestamp={req.get('client_timestamp')} | "
+            f"timestamp={time.time()}\n"
         )
         file.flush()
 
@@ -148,37 +157,63 @@ def enter_critical_section(req):
 
         file.write(
             f"EXIT_CS | peer={PEER_ID} | client={req['client_id']} | "
-            f"request={req['request_id']} | timestamp={time.time()}\n"
+            f"request={req['request_id']} | "
+            f"client_timestamp={req.get('client_timestamp')} | "
+            f"timestamp={time.time()}\n"
         )
 
         file.write(
             f"COMMITTED | peer={PEER_ID} | client={req['client_id']} | "
-            f"request={req['request_id']} | timestamp={time.time()}\n"
+            f"request={req['request_id']} | "
+            f"client_timestamp={req.get('client_timestamp')} | "
+            f"timestamp={time.time()}\n"
         )
         file.flush()
 
     print(f"[{PEER_ID}] Saindo da seção crítica")
 
 
-def release_deferred_requests():
+def send_ok_to_deferred_request(req, message):
+    requester_peer = req["peer_id"]
+
+    try:
+        requests.post(
+            f"http://{requester_peer}:5000/ok",
+            json={"from": PEER_ID},
+            timeout=5
+        )
+        print(f"[{PEER_ID}] {message} {requester_peer} | timestamp={req['timestamp']}")
+    except Exception as e:
+        print(f"[{PEER_ID}] Erro ao liberar OK para {requester_peer}: {e}")
+
+
+def release_deferred_requests(completed_request):
     global deferred_requests
 
     with lock:
-        requests_to_release = deferred_requests
+        requests_to_release = sorted(
+            deferred_requests,
+            key=lambda req: (req["timestamp"], req["peer_id"])
+        )
         deferred_requests = []
 
-    for req in requests_to_release:
-        requester_peer = req["peer_id"]
+    successor_requests = [
+        req for req in requests_to_release
+        if not has_priority(req, completed_request)
+    ]
 
-        try:
-            requests.post(
-                f"http://{requester_peer}:5000/ok",
-                json={"from": PEER_ID},
-                timeout=5
+    if successor_requests:
+        immediate_successor = successor_requests[0]
+        send_ok_to_deferred_request(
+            immediate_successor,
+            "OK liberado para sucessor temporal imediato"
+        )
+
+        for req in successor_requests[1:]:
+            send_ok_to_deferred_request(
+                req,
+                "OK liberado para pedido adiado seguinte"
             )
-            print(f"[{PEER_ID}] OK liberado para {requester_peer}")
-        except Exception as e:
-            print(f"[{PEER_ID}] Erro ao liberar OK para {requester_peer}: {e}")
 
 
 if __name__ == "__main__":

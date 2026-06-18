@@ -17,15 +17,20 @@ def main():
 
     for i in range(1, TOTAL_REQUESTS + 1):
         request_id = f"{CLIENT_ID}-{i}"
+        client_timestamp = time.time()
 
-        print(f"[{CLIENT_ID}] Solicitando acesso ao recurso R | pedido {request_id}")
+        print(
+            f"[{CLIENT_ID}] Solicitando acesso ao recurso R | "
+            f"pedido {request_id} | timestamp={client_timestamp}"
+        )
 
         try:
             response = requests.post(
                 f"{TARGET_PEER}/request_resource",
                 json={
                     "client_id": CLIENT_ID,
-                    "request_id": request_id
+                    "request_id": request_id,
+                    "client_timestamp": client_timestamp
                 },
                 timeout=60
             )

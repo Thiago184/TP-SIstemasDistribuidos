@@ -1,0 +1,258 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{geometry}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\geometry{margin=2.5cm}
+
+\title{Relat\'orio do Dashboard de Monitoramento do TP02}
+\author{Sistemas Distribu\'idos}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Objetivo do Dashboard}
+
+O dashboard foi criado para facilitar a visualiza\c{c}\~ao do funcionamento do protocolo
+de exclus\~ao m\'utua distribu\'ida implementado no trabalho pr\'atico. A interface permite
+acompanhar, de forma resumida, se os clientes est\~ao realizando requisi\c{c}\~oes, se os
+peers do Cluster Sync est\~ao entrando corretamente na se\c{c}\~ao cr\'itica e se o recurso
+compartilhado \texttt{R} est\'a sendo acessado sem sobreposi\c{c}\~oes.
+
+As informa\c{c}\~oes exibidas s\~ao extra\'idas principalmente de dois arquivos:
+
+\begin{itemize}
+    \item \texttt{recurso\_R.txt}: arquivo que registra os eventos de entrada, sa\'ida e
+    confirma\c{c}\~ao de acesso ao recurso compartilhado.
+    \item \texttt{logs\_execucao.txt}: arquivo que registra as mensagens emitidas pelos
+    clientes e pelos peers durante a execu\c{c}\~ao do sistema.
+\end{itemize}
+
+\section{Status Geral}
+
+O campo de status geral indica uma conclus\~ao autom\'atica sobre a execu\c{c}\~ao observada.
+Ele pode aparecer como funcionamento correto, aguardando eventos ou necessidade de
+verifica\c{c}\~ao.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{4cm} >{\raggedright\arraybackslash}p{10cm}}
+\toprule
+\textbf{Informa\c{c}\~ao} & \textbf{Significado} \\
+\midrule
+\texttt{Funcionamento correto} &
+Indica que o dashboard encontrou eventos no recurso, que os contadores principais est\~ao
+balanceados, que n\~ao houve sobreposi\c{c}\~ao de se\c{c}\~ao cr\'itica, que n\~ao faltam
+timestamps de cliente e que n\~ao foram encontrados erros nos logs. \\
+\texttt{Aguardando eventos} &
+Indica que ainda n\~ao h\'a eventos suficientes em \texttt{recurso\_R.txt}. Isso pode
+acontecer antes do in\'icio da execu\c{c}\~ao ou logo ap\'os limpar o arquivo. \\
+\texttt{Verificar alertas} &
+Indica que alguma valida\c{c}\~ao falhou, por exemplo: contadores diferentes, erro nos logs,
+timestamp ausente, pedido incompleto ou poss\'ivel sobreposi\c{c}\~ao. \\
+\bottomrule
+\end{longtable}
+
+\section{Resumo dos Eventos do Recurso}
+
+Esta se\c{c}\~ao apresenta os principais contadores derivados do arquivo
+\texttt{recurso\_R.txt}. Cada opera\c{c}\~ao correta de escrita no recurso deve gerar tr\^es
+linhas: \texttt{ENTER\_CS}, \texttt{EXIT\_CS} e \texttt{COMMITTED}.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{4cm} >{\raggedright\arraybackslash}p{10cm}}
+\toprule
+\textbf{Campo} & \textbf{Significado} \\
+\midrule
+\texttt{ENTER\_CS} &
+Quantidade de vezes em que algum peer entrou na se\c{c}\~ao cr\'itica para acessar o recurso
+compartilhado \texttt{R}. Cada entrada representa o in\'icio de uma opera\c{c}\~ao de escrita. \\
+\texttt{EXIT\_CS} &
+Quantidade de vezes em que algum peer saiu da se\c{c}\~ao cr\'itica. Para uma execu\c{c}\~ao
+correta, esse valor deve ser igual ao total de \texttt{ENTER\_CS}. \\
+\texttt{COMMITTED} &
+Quantidade de opera\c{c}\~oes conclu\'idas e confirmadas. Para uma execu\c{c}\~ao correta,
+esse valor tamb\'em deve ser igual ao total de \texttt{ENTER\_CS} e \texttt{EXIT\_CS}. \\
+\texttt{Sobreposi\c{c}\~oes} &
+Quantidade de casos em que um novo \texttt{ENTER\_CS} apareceu antes do \texttt{EXIT\_CS}
+da opera\c{c}\~ao anterior. O valor esperado \'e zero, pois qualquer valor maior que zero
+indica viola\c{c}\~ao da exclus\~ao m\'utua. \\
+\texttt{Client timestamp} &
+Quantidade de eventos do recurso que n\~ao possuem o timestamp enviado pelo cliente. O valor
+esperado \'e zero, pois cada pedido do cliente deve carregar um timestamp para identificar
+unicamente a solicita\c{c}\~ao. \\
+\texttt{Erros nos logs} &
+Quantidade de ocorr\^encias de termos associados a falhas em \texttt{logs\_execucao.txt},
+como \texttt{Erro}, \texttt{ERROR}, \texttt{Traceback}, \texttt{timeout} ou
+\texttt{Exception}. O valor esperado \'e zero. \\
+\bottomrule
+\end{longtable}
+
+\section{Valida\c{c}\~oes Autom\'aticas}
+
+O dashboard executa algumas verifica\c{c}\~oes autom\'aticas para avaliar se a execu\c{c}\~ao
+observada respeita o protocolo.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{5cm} >{\raggedright\arraybackslash}p{9cm}}
+\toprule
+\textbf{Valida\c{c}\~ao} & \textbf{Crit\'erio utilizado} \\
+\midrule
+Contadores balanceados &
+Verifica se as quantidades de \texttt{ENTER\_CS}, \texttt{EXIT\_CS} e \texttt{COMMITTED}
+s\~ao iguais. Se forem diferentes, alguma opera\c{c}\~ao ficou incompleta ou foi registrada
+incorretamente. \\
+Aus\^encia de sobreposi\c{c}\~ao &
+Verifica se nunca houve dois peers simultaneamente dentro da se\c{c}\~ao cr\'itica. Essa
+\'e a principal evid\^encia de que a exclus\~ao m\'utua foi respeitada. \\
+Sequ\^encia correta de eventos &
+Verifica se todo \texttt{EXIT\_CS} corresponde a um \texttt{ENTER\_CS} anterior e se n\~ao
+existe se\c{c}\~ao cr\'itica aberta ao final do arquivo. \\
+Presen\c{c}a de \texttt{client\_timestamp} &
+Verifica se os eventos registrados em \texttt{recurso\_R.txt} possuem o timestamp original
+enviado pelo cliente. \\
+Pedidos completos &
+Verifica se todo pedido que entrou na se\c{c}\~ao cr\'itica tamb\'em possui sa\'ida
+\texttt{EXIT\_CS} e confirma\c{c}\~ao \texttt{COMMITTED}. \\
+Aus\^encia de erros nos logs &
+Verifica se o arquivo de logs n\~ao cont\'em mensagens indicativas de erro, exce\c{c}\~ao ou
+timeout. \\
+\bottomrule
+\end{longtable}
+
+\section{Pedidos por Cliente}
+
+O gr\'afico de pedidos por cliente mostra quantas vezes cada cliente conseguiu acessar o
+recurso compartilhado. A contagem \'e baseada nos eventos \texttt{ENTER\_CS}, pois cada
+entrada na se\c{c}\~ao cr\'itica representa um pedido que come\c{c}ou a ser executado.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{4cm} >{\raggedright\arraybackslash}p{10cm}}
+\toprule
+\textbf{Informa\c{c}\~ao} & \textbf{Significado} \\
+\midrule
+\texttt{client1}, \texttt{client2}, etc. &
+Identifica o cliente que realizou pedidos de escrita ao recurso \texttt{R}. \\
+Valor da barra &
+Quantidade de acessos iniciados por aquele cliente. Segundo o enunciado, cada cliente deve
+realizar entre 10 e 50 pedidos. \\
+Utilidade &
+Permite verificar se todos os clientes participaram da execu\c{c}\~ao e se a quantidade de
+pedidos ficou dentro da faixa exigida. \\
+\bottomrule
+\end{longtable}
+
+\section{Acessos por Peer}
+
+O gr\'afico de acessos por peer mostra quantas vezes cada elemento do Cluster Sync entrou na
+se\c{c}\~ao cr\'itica. No projeto, cada cliente conhece apenas um peer, ent\~ao a distribui\c{c}\~ao
+por peer tende a acompanhar a distribui\c{c}\~ao por cliente.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{4cm} >{\raggedright\arraybackslash}p{10cm}}
+\toprule
+\textbf{Informa\c{c}\~ao} & \textbf{Significado} \\
+\midrule
+\texttt{peer1}, \texttt{peer2}, etc. &
+Identifica o processo do Cluster Sync que coordenou determinado acesso ao recurso
+compartilhado. \\
+Valor da barra &
+Quantidade de vezes em que aquele peer entrou na se\c{c}\~ao cr\'itica. \\
+Utilidade &
+Permite verificar se os cinco processos do Cluster Sync participaram da execu\c{c}\~ao e se
+o acesso ao recurso passou por diferentes peers. \\
+\bottomrule
+\end{longtable}
+
+\section{Logs do Protocolo}
+
+Esta se\c{c}\~ao resume informa\c{c}\~oes extra\'idas de \texttt{logs\_execucao.txt}. Ela ajuda
+a conferir se o comportamento dos clientes e dos peers est\'a compat\'ivel com o enunciado.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{5cm} >{\raggedright\arraybackslash}p{9cm}}
+\toprule
+\textbf{Campo} & \textbf{Significado} \\
+\midrule
+\texttt{COMMITTED clientes} &
+Quantidade de mensagens \texttt{COMMITTED} recebidas pelos clientes. Essa mensagem indica
+que o acesso ao recurso foi conclu\'ido e que o cliente pode iniciar seu per\'iodo de espera. \\
+\texttt{Clientes finalizados} &
+Quantidade de clientes que registraram a mensagem de finaliza\c{c}\~ao. Em uma execu\c{c}\~ao
+completa do projeto, o valor esperado \'e 5. \\
+\texttt{Sleeps} &
+Quantidade de esperas realizadas pelos clientes ap\'os receberem \texttt{COMMITTED}. Cada
+espera deve ocorrer antes de um novo pedido de escrita. \\
+\texttt{Intervalo dos sleeps} &
+Mostra o menor e o maior tempo de espera registrados. Pelo enunciado, os valores devem
+estar entre 1 e 5 segundos. \\
+\texttt{Sucessor imediato} &
+Quantidade de vezes em que um peer liberou um \texttt{OK} para o pedido adiado com timestamp
+imediatamente superior ao seu. Esse campo demonstra a regra de libera\c{c}\~ao para o sucessor
+temporal ap\'os a sa\'ida da se\c{c}\~ao cr\'itica. \\
+\texttt{Adiados seguintes} &
+Quantidade de libera\c{c}\~oes de \texttt{OK} para outros pedidos adiados que vinham depois
+do sucessor temporal imediato. Isso preserva o funcionamento do protocolo sem deixar peers
+travados aguardando permiss\~oes antigas. \\
+\texttt{Linhas de log} &
+Quantidade total de linhas presentes em \texttt{logs\_execucao.txt}. Esse valor ajuda a
+confirmar se o arquivo de logs foi preenchido durante a execu\c{c}\~ao. \\
+\bottomrule
+\end{longtable}
+
+\section{\'Ultimos Eventos do Recurso R}
+
+A tabela de \'ultimos eventos mostra as linhas mais recentes interpretadas a partir de
+\texttt{recurso\_R.txt}. Ela permite acompanhar a execu\c{c}\~ao quase em tempo real.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{4cm} >{\raggedright\arraybackslash}p{10cm}}
+\toprule
+\textbf{Coluna} & \textbf{Significado} \\
+\midrule
+\texttt{Evento} &
+Tipo do evento registrado. Pode ser \texttt{ENTER\_CS}, \texttt{EXIT\_CS} ou
+\texttt{COMMITTED}. \\
+\texttt{Peer} &
+Peer do Cluster Sync respons\'avel pelo acesso ao recurso naquele evento. \\
+\texttt{Cliente} &
+Cliente que originou o pedido de acesso ao recurso. \\
+\texttt{Pedido} &
+Identificador \'unico do pedido, por exemplo \texttt{client1-3}. \\
+\texttt{Timestamp cliente} &
+Timestamp gerado pelo cliente no momento em que ele enviou o pedido ao peer conhecido. Esse
+campo evidencia que o pedido do cliente possui uma marca temporal pr\'opria. \\
+\texttt{Timestamp evento} &
+Timestamp registrado pelo peer no momento do evento no recurso. Ele permite observar a ordem
+temporal dos acessos e medir o tempo dentro da se\c{c}\~ao cr\'itica. \\
+\bottomrule
+\end{longtable}
+
+\section{Como Interpretar uma Execu\c{c}\~ao Correta}
+
+Uma execu\c{c}\~ao pode ser considerada correta quando as seguintes condi\c{c}\~oes s\~ao
+observadas no dashboard:
+
+\begin{itemize}
+    \item \texttt{ENTER\_CS}, \texttt{EXIT\_CS} e \texttt{COMMITTED} possuem o mesmo valor.
+    \item O n\'umero de sobreposi\c{c}\~oes \'e zero.
+    \item O n\'umero de timestamps de cliente ausentes \'e zero.
+    \item O n\'umero de erros nos logs \'e zero.
+    \item Os cinco clientes aparecem como finalizados ao final da execu\c{c}\~ao.
+    \item Cada cliente possui entre 10 e 50 pedidos.
+    \item Os sleeps dos clientes ficam entre 1 e 5 segundos.
+    \item As dura\c{c}\~oes de se\c{c}\~ao cr\'itica ficam entre 0,2 e 1 segundo.
+    \item Existem registros de libera\c{c}\~ao para o sucessor temporal imediato quando h\'a
+    pedidos adiados.
+\end{itemize}
+
+\section{Conclus\~ao}
+
+O dashboard funciona como uma ferramenta de apoio para demonstrar o comportamento do
+protocolo de exclus\~ao m\'utua distribu\'ida. Ele n\~ao substitui a an\'alise do c\'odigo, mas
+ajuda a apresentar evid\^encias pr\'aticas de que o sistema respeita a exclus\~ao m\'utua,
+processa pedidos dos cinco clientes, registra timestamps e conclui as opera\c{c}\~oes com
+\texttt{COMMITTED}.
+
+\end{document}

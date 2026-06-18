@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard TP02</title>
+  <style>
+    :root {
+      --bg: #f5f5f0;
+      --text: #1f2933;
+      --muted: #667085;
+      --line: #d9ddd3;
+      --panel: #ffffff;
+      --teal: #087f8c;
+      --green: #247a3b;
+      --amber: #b7791f;
+      --red: #b42318;
+      --blue: #2f5aa6;
+      --shadow: 0 1px 2px rgba(31, 41, 51, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .wrap {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 72px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: 3px;
+      font-size: 13px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      min-height: 38px;
+      padding: 0 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--amber);
+    }
+
+    .status.ok .status-dot {
+      background: var(--green);
+    }
+
+    .status.warn .status-dot {
+      background: var(--red);
+    }
+
+    main {
+      padding: 22px 0 34px;
+    }
+
+    section {
+      margin-top: 22px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      min-height: 92px;
+      padding: 13px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .metric-note {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .bar-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 78px 1fr 44px;
+      align-items: center;
+      gap: 10px;
+      min-height: 24px;
+    }
+
+    .bar-label {
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .bar-track {
+      background: #ecefe7;
+      border-radius: 8px;
+      height: 12px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 8px;
+      background: var(--teal);
+      width: 0%;
+      transition: width 160ms ease;
+    }
+
+    .bar-row:nth-child(2n) .bar-fill {
+      background: var(--blue);
+    }
+
+    .bar-value {
+      color: var(--muted);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    th,
+    td {
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      padding: 9px 10px;
+      font-size: 13px;
+      vertical-align: top;
+    }
+
+    th {
+      background: #eef1e9;
+      color: #344054;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code {
+      font-family: Consolas, Monaco, monospace;
+      font-size: 12px;
+      color: #344054;
+    }
+
+    .tag {
+      display: inline-block;
+      min-width: 78px;
+      border-radius: 8px;
+      padding: 3px 7px;
+      color: #ffffff;
+      text-align: center;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .tag.enter {
+      background: var(--blue);
+    }
+
+    .tag.exit {
+      background: var(--amber);
+    }
+
+    .tag.commit {
+      background: var(--green);
+    }
+
+    .alerts {
+      display: grid;
+      gap: 8px;
+    }
+
+    .alert {
+      border-left: 4px solid var(--amber);
+      background: #fff9eb;
+      padding: 10px 12px;
+      border-radius: 8px;
+    }
+
+    .alert.ok {
+      border-left-color: var(--green);
+      background: #effaf1;
+    }
+
+    .alert.bad {
+      border-left-color: var(--red);
+      background: #fff1f0;
+    }
+
+    @media (max-width: 920px) {
+      .metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .split {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .wrap {
+        width: min(100% - 20px, 1180px);
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 14px 0;
+      }
+
+      .metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap topbar">
+      <div>
+        <h1>Dashboard TP02</h1>
+        <div class="subtitle">Monitoramento simples do protocolo de exclusao mutua distribuida</div>
+      </div>
+      <div id="status" class="status">
+        <span class="status-dot"></span>
+        <span id="status-text">Carregando</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section>
+      <div class="section-head">
+        <h2>Resumo</h2>
+        <span id="last-update" class="hint">Atualizando...</span>
+      </div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">ENTER_CS</div>
+          <div id="metric-enter" class="metric-value">0</div>
+          <div class="metric-note">entradas em R</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">EXIT_CS</div>
+          <div id="metric-exit" class="metric-value">0</div>
+          <div class="metric-note">saidas de R</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">COMMITTED</div>
+          <div id="metric-commit" class="metric-value">0</div>
+          <div class="metric-note">operacoes concluidas</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Sobreposicoes</div>
+          <div id="metric-overlap" class="metric-value">0</div>
+          <div class="metric-note">esperado: 0</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Client timestamp</div>
+          <div id="metric-client-ts" class="metric-value">0</div>
+          <div class="metric-note">ausentes em R</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Erros nos logs</div>
+          <div id="metric-errors" class="metric-value">0</div>
+          <div class="metric-note">esperado: 0</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Validacoes</h2>
+        <span class="hint">Baseado em recurso_R.txt e logs_execucao.txt</span>
+      </div>
+      <div id="alerts" class="alerts"></div>
+    </section>
+
+    <section class="split">
+      <div>
+        <div class="section-head">
+          <h2>Pedidos por cliente</h2>
+          <span class="hint">contagem de ENTER_CS</span>
+        </div>
+        <div class="panel">
+          <div id="client-bars" class="bar-list"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-head">
+          <h2>Acessos por peer</h2>
+          <span class="hint">contagem de ENTER_CS</span>
+        </div>
+        <div class="panel">
+          <div id="peer-bars" class="bar-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Logs do protocolo</h2>
+        <span class="hint">COMMITTED, sleeps e sucessor temporal</span>
+      </div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">COMMITTED clientes</div>
+          <div id="log-commits" class="metric-value">0</div>
+          <div class="metric-note">confirmacoes recebidas</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Clientes finalizados</div>
+          <div id="log-finalized" class="metric-value">0</div>
+          <div class="metric-note">esperado: 5</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Sleeps</div>
+          <div id="log-waits" class="metric-value">0</div>
+          <div id="log-wait-range" class="metric-note">intervalo: -</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Sucessor imediato</div>
+          <div id="log-successor" class="metric-value">0</div>
+          <div class="metric-note">OKs liberados</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Adiados seguintes</div>
+          <div id="log-following" class="metric-value">0</div>
+          <div class="metric-note">OKs em ordem</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Linhas de log</div>
+          <div id="log-lines" class="metric-value">0</div>
+          <div class="metric-note">arquivo capturado</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Ultimos eventos de R</h2>
+        <span class="hint">atualiza a cada 2 segundos</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Evento</th>
+            <th>Peer</th>
+            <th>Cliente</th>
+            <th>Pedido</th>
+            <th>Timestamp cliente</th>
+            <th>Timestamp evento</th>
+          </tr>
+        </thead>
+        <tbody id="events-body">
+          <tr><td colspan="6">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const fmt = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 3 });
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = value;
+    }
+
+    function setStatus(ok, hasEvents) {
+      const status = document.getElementById("status");
+      const text = document.getElementById("status-text");
+      status.classList.remove("ok", "warn");
+      if (!hasEvents) {
+        text.textContent = "Aguardando eventos";
+        return;
+      }
+      if (ok) {
+        status.classList.add("ok");
+        text.textContent = "Funcionamento correto";
+      } else {
+        status.classList.add("warn");
+        text.textContent = "Verificar alertas";
+      }
+    }
+
+    function renderBars(id, values) {
+      const root = document.getElementById(id);
+      root.replaceChildren();
+      const entries = Object.entries(values || {});
+      const max = Math.max(1, ...entries.map(([, value]) => value));
+
+      if (entries.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "hint";
+        empty.textContent = "Sem eventos ainda.";
+        root.appendChild(empty);
+        return;
+      }
+
+      for (const [label, value] of entries) {
+        const row = document.createElement("div");
+        row.className = "bar-row";
+
+        const labelEl = document.createElement("div");
+        labelEl.className = "bar-label";
+        labelEl.textContent = label;
+
+        const track = document.createElement("div");
+        track.className = "bar-track";
+        const fill = document.createElement("div");
+        fill.className = "bar-fill";
+        fill.style.width = `${Math.round((value / max) * 100)}%`;
+        track.appendChild(fill);
+
+        const valueEl = document.createElement("div");
+        valueEl.className = "bar-value";
+        valueEl.textContent = value;
+
+        row.append(labelEl, track, valueEl);
+        root.appendChild(row);
+      }
+    }
+
+    function renderAlerts(data) {
+      const root = document.getElementById("alerts");
+      root.replaceChildren();
+      const resource = data.resource;
+      const logs = data.logs;
+      const alerts = [];
+
+      if (!resource.has_events) {
+        alerts.push(["alert", "Aguardando eventos em recurso_R.txt."]);
+      } else if (resource.ok && logs.error_count === 0) {
+        alerts.push(["alert ok", "Sem sobreposicao detectada, contadores balanceados e timestamps de cliente presentes."]);
+      }
+
+      if (resource.overlap_count > 0) {
+        alerts.push(["alert bad", `${resource.overlap_count} sobreposicao(oes) de secao critica detectada(s).`]);
+      }
+      if (resource.bad_sequence_count > 0 || resource.active_at_end) {
+        alerts.push(["alert bad", "Sequencia ENTER/EXIT invalida ou secao critica ainda aberta no fim do arquivo."]);
+      }
+      if (resource.missing_client_timestamp_count > 0) {
+        alerts.push(["alert bad", `${resource.missing_client_timestamp_count} evento(s) sem client_timestamp.`]);
+      }
+      if (resource.incomplete_exit_count > 0 || resource.incomplete_commit_count > 0) {
+        alerts.push(["alert bad", "Ha pedidos sem EXIT_CS ou sem COMMITTED."]);
+      }
+      if (logs.error_count > 0) {
+        alerts.push(["alert bad", `${logs.error_count} ocorrencia(s) de erro encontradas em logs_execucao.txt.`]);
+      }
+      if (logs.finalized_count > 0 && logs.finalized_count < 5) {
+        alerts.push(["alert", `${logs.finalized_count} de 5 clientes finalizaram nos logs capturados.`]);
+      }
+
+      for (const [className, text] of alerts) {
+        const item = document.createElement("div");
+        item.className = className;
+        item.textContent = text;
+        root.appendChild(item);
+      }
+    }
+
+    function renderEvents(events) {
+      const body = document.getElementById("events-body");
+      body.replaceChildren();
+
+      if (!events || events.length === 0) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 6;
+        cell.textContent = "Sem eventos ainda.";
+        row.appendChild(cell);
+        body.appendChild(row);
+        return;
+      }
+
+      for (const event of events) {
+        const row = document.createElement("tr");
+        const tagClass = event.type === "ENTER_CS" ? "enter" : event.type === "EXIT_CS" ? "exit" : "commit";
+        const cells = [
+          { value: event.type, tag: tagClass },
+          { value: event.peer },
+          { value: event.client },
+          { value: event.request },
+          { value: event.client_timestamp || "-" },
+          { value: fmt.format(event.timestamp) },
+        ];
+
+        for (const cellData of cells) {
+          const cell = document.createElement("td");
+          if (cellData.tag) {
+            const tag = document.createElement("span");
+            tag.className = `tag ${cellData.tag}`;
+            tag.textContent = cellData.value;
+            cell.appendChild(tag);
+          } else {
+            const code = document.createElement("code");
+            code.textContent = cellData.value;
+            cell.appendChild(code);
+          }
+          row.appendChild(cell);
+        }
+        body.appendChild(row);
+      }
+    }
+
+    async function refresh() {
+      try {
+        const response = await fetch("/api/summary", { cache: "no-store" });
+        const data = await response.json();
+        const resource = data.resource;
+        const logs = data.logs;
+
+        setStatus(data.overall_ok, resource.has_events);
+        setText("last-update", `Ultima atualizacao: ${new Date().toLocaleTimeString("pt-BR")}`);
+        setText("metric-enter", resource.counts.ENTER_CS);
+        setText("metric-exit", resource.counts.EXIT_CS);
+        setText("metric-commit", resource.counts.COMMITTED);
+        setText("metric-overlap", resource.overlap_count);
+        setText("metric-client-ts", resource.missing_client_timestamp_count);
+        setText("metric-errors", logs.error_count);
+        setText("log-commits", logs.committed_received_count);
+        setText("log-finalized", logs.finalized_count);
+        setText("log-waits", logs.wait_count);
+        setText("log-wait-range", `intervalo: ${logs.wait_min ?? "-"} a ${logs.wait_max ?? "-"}s`);
+        setText("log-successor", logs.successor_immediate_count);
+        setText("log-following", logs.deferred_following_count);
+        setText("log-lines", logs.line_count);
+
+        renderAlerts(data);
+        renderBars("client-bars", resource.per_client);
+        renderBars("peer-bars", resource.per_peer);
+        renderEvents(resource.latest_events);
+      } catch (error) {
+        setText("status-text", "Falha ao atualizar");
+      }
+    }
+
+    refresh();
+    setInterval(refresh, 2000);
+  </script>
+</body>
+</html>

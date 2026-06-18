@@ -90,3 +90,12 @@ services:
       - TARGET_PEER=http://peer5:5000
     depends_on:
       - peer5
+
+  dashboard:
+    build: ./dashboard
+    container_name: dashboard
+    volumes:
+      - ./recurso_R.txt:/app/recurso_R.txt:ro
+      - ./logs_execucao.txt:/app/logs_execucao.txt:ro
+    ports:
+      - "8080:8080"
